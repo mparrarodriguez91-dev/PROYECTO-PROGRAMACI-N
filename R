@@ -238,3 +238,61 @@ graficar_barras_apiladas <- function(ruta, col_x, col_color) {
  
   print(p)
 }
+
+                  #----Funciones----
+mediana <- function(lista) {
+  y_sorted <- sort(lista)          # Ordena la lista de menor a mayor
+  n <- length(lista) %/% 2        # %/% es división entera, igual que // en Python
+  calcular_mediana <- y_sorted[n]  # Toma el valor del medio
+  return(calcular_mediana)
+}
+ 
+media <- function(lista) {
+  calcular_media <- sum(lista) / length(lista)  # Suma todos y divide entre cuántos hay
+  return(calcular_media)
+}
+ 
+moda <- function(lista) {
+  conteo <- list()                         # Lista para contar cuántas veces aparece cada valor
+  for (dato in lista) {
+    clave <- as.character(dato)            # as.character convierte el número a texto para usarlo de llave
+    if (!is.null(conteo[[clave]])) {
+      conteo[[clave]] <- conteo[[clave]] + 1
+    } else {
+      conteo[[clave]] <- 1
+    }
+  }
+  maximo              <- names(conteo)[1]  # Arranca asumiendo que el primero es el más frecuente
+  maximas_apariciones <- conteo[[maximo]]
+  for (numero in names(conteo)) {          # Recorre todos y actualiza si encuentra uno más frecuente
+    apariciones <- conteo[[numero]]
+    if (apariciones > maximas_apariciones) {
+      maximo              <- numero
+      maximas_apariciones <- apariciones
+    }
+  }
+  return(as.numeric(maximo))
+}
+ 
+ 
+#----Aplicamos las funciones----
+ 
+# Para dispersión — cambia la ruta y los nombres de columnas
+graficar("ruta_de_acceso.csv", "columna_x", "columna_y")
+ 
+# Para barras simples — cambia la ruta y el nombre de columna
+graficar_barras("ruta_de_acceso.csv", "columna_x")
+ 
+# Para barras apiladas — cambia la ruta y los nombres de columnas
+graficar_barras_apiladas("ruta_de_acceso.csv", "columna_x", "columna_color")
+ 
+# Reemplaza clasificacion[["nombre_columna"]] por la columna que quieras analizar
+datos <- clasificacion[["pon el nombre de tu columna aqui"]]
+ 
+val_media   <- media(datos)
+val_mediana <- mediana(datos)
+val_moda    <- moda(datos)
+ 
+cat(sprintf("Media: %f\n",   val_media))
+cat(sprintf("Mediana: %f\n", val_mediana))
+cat(sprintf("Moda: %f\n",    val_moda))
