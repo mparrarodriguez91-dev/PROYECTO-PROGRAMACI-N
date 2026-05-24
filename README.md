@@ -138,3 +138,86 @@ def graficar_barras(ruta, col_x):
     plt.xticks(rotation=45, ha="right", fontsize=8)
     plt.tight_layout()
     plt.show()
+  #-----Función para gráfica de barras apiladas-----#
+def graficar_barras_apiladas(ruta, col_x, col_color):
+    plt.figure(figsize=(15, 7))             # Más ancha porque suele haber muchas categorías en X
+    with open(ruta, "r", encoding="utf-8-sig") as file:
+        filas = file.read().split("\n")
+        columns = filas[0].strip().split(",")
+        clasificacion = {}
+        for variable in columns:
+            clasificacion[variable] = []
+ 
+        del(filas[0])
+ 
+        filas = limpiar_datos([f.strip().split(",") for f in filas], columns)
+ 
+        for fila in filas:
+            datos = fila
+            for columna_index in range(len(columns)):
+                if columna_index < len(fila):
+                    clasificacion[columns[columna_index]].append(datos[columna_index])
+ 
+    columna_x     = clasificacion[col_x]        # Eje X: las categorías principales
+    columna_color = clasificacion[col_color]    # Lo que colorea las barras
+ 
+    # Contamos cuántas veces aparece cada combinación col_x + col_color
+    # conteo["Cat"]["Lazy"] = 5 significa "hay 5 gatos lazy"
+    conteo = {}
+    for i in range(len(columna_x)):
+        cx = columna_x[i]
+        cc = columna_color[i]
+        if cx not in conteo:            # Si la categoría X no existe aún, la creamos
+            conteo[cx] = {}
+        if cc not in conteo[cx]:        # Si la categoría color no existe para esa X, la creamos
+            conteo[cx][cc] = 0
+        conteo[cx][cc] += 1             # Sumamos 1 al contador
+ 
+    # Sacamos los valores únicos ordenados
+    x_unicas = []
+    for e in columna_x:
+        if e not in x_unicas:
+            x_unicas.append(e)
+    x_unicas = sorted(x_unicas)
+ 
+    color_unicas = []
+    for c in columna_color:
+        if c not in color_unicas:
+            color_unicas.append(c)
+    color_unicas = sorted(color_unicas)
+ 
+    # Colores pastel automáticos
+    colores_disponibles = ["#FFB3BA", "#B3ECFF", "#B3FFB3", "#FFD9B3",
+                           "#FFFFB3", "#C5B3FF", "#FFB3F0", "#B3FFF0"]
+    mapa_colores = {}
+    for i in range(len(color_unicas)):
+        mapa_colores[color_unicas[i]] = colores_disponibles[i % len(colores_disponibles)]
+ 
+    # bases guarda desde dónde empieza cada barra — arranca en 0 para todas las categorías X
+    bases = [0] * len(x_unicas)
+    for color in color_unicas:
+        valores = []
+        for cx in x_unicas:
+            if cx in conteo and color in conteo[cx]:
+                valores.append(conteo[cx][color])
+            else:
+                valores.append(0)   # Si esa combinación no existe, ponemos 0
+ 
+        # Dibuja las barras de este color encima de las anteriores (bottom=bases)
+        plt.bar(x_unicas, valores, bottom=bases,
+                color=mapa_colores[color], label=color,
+                edgecolor="white", linewidth=0.5)
+ 
+        # Subimos la base para que el siguiente color empiece donde este terminó
+        for i in range(len(bases)):
+            bases[i] += valores[i]
+ 
+    # Leyenda automática
+    plt.legend(title=col_color, bbox_to_anchor=(1.01, 1), loc="upper left")
+    plt.xlabel(col_x)
+    plt.ylabel("Conteo")
+    plt.title(f"Barras apiladas: {col_x} por {col_color}")
+    plt.xticks(rotation=45, ha="right", fontsize=8)
+    plt.tight_layout()
+    plt.show()
+    
