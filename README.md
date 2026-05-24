@@ -220,4 +220,54 @@ def graficar_barras_apiladas(ruta, col_x, col_color):
     plt.xticks(rotation=45, ha="right", fontsize=8)
     plt.tight_layout()
     plt.show()
+
+    #----Funciones----
+def mediana(lista):
+    y_sorted = sorted(lista)        # Ordena la lista de menor a mayor
+    n = len(lista) // 2             # // es división entera, nos da el índice del medio
+    calcular_mediana = y_sorted[n]  # Toma el valor del medio
+    return calcular_mediana
+ 
+def media(lista):
+    calcular_media = sum(lista) / len(lista)  # Suma todos los valores y los divide entre cuántos hay
+    return calcular_media
+ 
+def moda(lista):
+    conteo = {}                          # Diccionario para contar cuántas veces aparece cada valor
+    for dato in lista:
+        if dato in conteo:
+            conteo[dato] += 1
+        else:
+            conteo[dato] = 1
+    maximo = list(conteo.keys())[0]      # Arranca asumiendo que el primero es el más frecuente
+    maximas_apariciones = conteo[maximo]
+    for numero in conteo:                # Recorre todos y actualiza si encuentra uno más frecuente
+        apariciones = conteo[numero]
+        if apariciones > maximas_apariciones:
+            maximo = numero
+            maximas_apariciones = apariciones
+    return maximo
+ 
+ 
+#----Aplicamos las funciones----
+ 
+# Para dispersión — cambia la ruta y los nombres de columnas
+graficar("ruta_de_acceso.csv", "columna_x", "columna_y")
+ 
+# Para barras simples — cambia la ruta y el nombre de columna
+graficar_barras("ruta_de_acceso.csv", "columna_x")
+ 
+# Para barras apiladas — cambia la ruta y los nombres de columnas
+graficar_barras_apiladas("ruta_de_acceso.csv", "columna_x", "columna_color")
+ 
+# Reemplaza clasificacion["nombre_columna"] por la columna que quieras analizar
+datos = clasificacion["pon el nombre de tu columna aqui"]
+ 
+val_media   = media(datos)
+val_mediana = mediana(datos)
+val_moda    = moda(datos)
+ 
+print(f"Media: {val_media}")
+print(f"Mediana: {val_mediana}")
+print(f"Moda: {val_moda}")
     
