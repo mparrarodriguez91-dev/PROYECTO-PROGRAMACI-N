@@ -109,3 +109,132 @@ graficar <- function(ruta, x, y) {
  
   print(p)
 }
+#-----Función para gráfica de barras simples-----#
+graficar_barras <- function(ruta, col_x) {
+  lineas  <- readLines(ruta)
+  columns <- strsplit(lineas[1], ",")[[1]]
+  lineas  <- lineas[-1]
+ 
+  clasificacion <- list()
+  for (variable in columns) {
+    clasificacion[[variable]] <- c()
+  }
+ 
+  filas <- lapply(lineas, function(f) strsplit(f, ",")[[1]])
+  filas <- limpiar_datos(filas, columns)
+ 
+  for (fila in filas) {
+    for (columna_index in seq_along(columns)) {
+      if (columna_index <= length(fila)) {
+        clasificacion[[columns[columna_index]]] <- c(
+          clasificacion[[columns[columna_index]]],
+          fila[columna_index]
+        )
+      }
+    }
+  }
+ 
+  columna_x <- clasificacion[[col_x]]      # La columna que queremos contar
+ 
+  # Contamos cuántas veces aparece cada valor
+  conteo <- list()
+  for (valor in columna_x) {
+    if (is.null(conteo[[valor]])) {
+      conteo[[valor]] <- 0
+    }
+    conteo[[valor]] <- conteo[[valor]] + 1
+  }
+ 
+  x_unicas <- sort(names(conteo))
+  valores  <- sapply(x_unicas, function(x) conteo[[x]])
+ 
+  # Colores pastel automáticos — uno por barra
+  colores_disponibles <- c("#FFB3BA", "#B3ECFF", "#B3FFB3", "#FFD9B3",
+                            "#FFFFB3", "#C5B3FF", "#FFB3F0", "#B3FFF0")
+  colores <- colores_disponibles[((seq_along(x_unicas) - 1) %% length(colores_disponibles)) + 1]
+ 
+  df_plot <- data.frame(x = x_unicas, y = valores)
+ 
+  p <- ggplot(df_plot, aes(x = x, y = y, fill = x)) +
+    geom_bar(stat = "identity", color = "white", linewidth = 0.3) +
+    scale_fill_manual(values = setNames(colores, x_unicas)) +
+    labs(x = col_x, y = "Conteo", title = paste("Distribución de", col_x)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+          legend.position = "none")
+ 
+  print(p)
+}
+ 
+ 
+#-----Función para gráfica de barras apiladas-----#
+graficar_barras_apiladas <- function(ruta, col_x, col_color) {
+  lineas  <- readLines(ruta)
+  columns <- strsplit(lineas[1], ",")[[1]]
+  lineas  <- lineas[-1]
+ 
+  clasificacion <- list()
+  for (variable in columns) {
+    clasificacion[[variable]] <- c()
+  }
+ 
+  filas <- lapply(lineas, function(f) strsplit(f, ",")[[1]])
+  filas <- limpiar_datos(filas, columns)
+ 
+  for (fila in filas) {
+    for (columna_index in seq_along(columns)) {
+      if (columna_index <= length(fila)) {
+        clasificacion[[columns[columna_index]]] <- c(
+          clasificacion[[columns[columna_index]]],
+          fila[columna_index]
+        )
+      }
+    }
+  }
+ 
+  columna_x     <- clasificacion[[col_x]]
+  columna_color <- clasificacion[[col_color]]
+ 
+  conteo <- list()
+  for (i in seq_along(columna_x)) {
+    cx <- columna_x[i]
+    cc <- columna_color[i]
+    if (is.null(conteo[[cx]])) conteo[[cx]] <- list()
+    if (is.null(conteo[[cx]][[cc]])) conteo[[cx]][[cc]] <- 0
+    conteo[[cx]][[cc]] <- conteo[[cx]][[cc]] + 1
+  }
+ 
+  x_unicas <- sort(unique(columna_x))
+  color_unicas <- sort(unique(columna_color))
+ 
+  colores_disponibles <- c("#FFB3BA", "#B3ECFF", "#B3FFB3", "#FFD9B3",
+                            "#FFFFB3", "#C5B3FF", "#FFB3F0", "#B3FFF0")
+  mapa_colores <- c()
+  for (i in seq_along(color_unicas)) {
+    mapa_colores[color_unicas[i]] <- colores_disponibles[((i - 1) %% length(colores_disponibles)) + 1]
+  }
+ 
+  df_plot <- data.frame(
+    x     = rep(x_unicas, times = length(color_unicas)),
+    color = rep(color_unicas, each = length(x_unicas)),
+    valor = 0
+  )
+ 
+  for (i in seq_len(nrow(df_plot))) {
+    cx <- as.character(df_plot$x[i])
+    cc <- as.character(df_plot$color[i])
+    if (!is.null(conteo[[cx]]) && !is.null(conteo[[cx]][[cc]])) {
+      df_plot$valor[i] <- conteo[[cx]][[cc]]
+    }
+  }
+ 
+  p <- ggplot(df_plot, aes(x = x, y = valor, fill = color)) +
+    geom_bar(stat = "identity", color = "white", linewidth = 0.3) +
+    scale_fill_manual(values = mapa_colores) +
+    labs(fill = col_color, x = col_x, y = "Conteo",
+         title = paste("Barras apiladas:", col_x, "por", col_color)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+ 
+  print(p)
+}
