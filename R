@@ -1,1 +1,111 @@
-
+#Kuan, Parra, Ruiz ❀⸜(˶´ ˘ `˶)⸝❀
+ 
+library(ggplot2)
+ 
+#-----Limpieza de datos-----#
+limpiar_datos <- function(filas, columns) {
+  filas_limpias <- list()
+  filas_vistas  <- list()     # Para recordar qué filas ya pasaron y detectar duplicados
+ 
+  for (fila in filas) {
+    # Filtro 1: si la fila está completamente vacía, la saltamos
+    if (length(fila) == 0 || (length(fila) == 1 && fila[[1]] == "")) {
+      next                    # next en R es igual que continue en Python
+    }
+ 
+    # Filtro 2: si la fila ya la habíamos visto antes, es duplicado, la saltamos
+    es_duplicado <- FALSE
+    for (vista in filas_vistas) {
+      if (identical(fila, vista)) {  # identical() compara si dos listas son exactamente iguales
+        es_duplicado <- TRUE
+        break
+      }
+    }
+    if (es_duplicado) next
+ 
+    # Filtro 3: revisamos dato por dato si hay alguno vacío (sería un NaN)
+    fila_valida <- TRUE
+    for (dato in fila) {
+      if (trimws(dato) == "") {      # trimws() es igual que strip() en Python
+        fila_valida <- FALSE
+        break
+      }
+    }
+ 
+    # Solo si pasó los 3 filtros la guardamos
+    if (fila_valida) {
+      filas_limpias <- append(filas_limpias, list(fila))
+      filas_vistas  <- append(filas_vistas,  list(fila))
+    }
+  }
+ 
+  return(filas_limpias)
+}
+ 
+ 
+#-----Función para gráfica de dispersión-----#
+graficar <- function(ruta, x, y) {
+  lineas  <- readLines(ruta)                  # Lee todas las líneas del CSV
+  columns <- strsplit(lineas[1], ",")[[1]]    # La primera línea son los nombres de las columnas
+  lineas  <- lineas[-1]                       # Elimina el encabezado (igual que del(filas[0]))
+ 
+  clasificacion <- list()                     # Diccionario donde cada columna tendrá su lista de datos
+  for (variable in columns) {
+    clasificacion[[variable]] <- c()          # Crea una lista vacía por cada columna
+  }
+ 
+  # Parte cada línea por comas — igual al [f.split(",") for f in filas] de Python
+  filas <- lapply(lineas, function(f) strsplit(f, ",")[[1]])
+  filas <- limpiar_datos(filas, columns)
+ 
+ 
+  # Llena el diccionario clasificacion con los datos de cada fila
+  for (fila in filas) {
+    for (columna_index in seq_along(columns)) {
+      clasificacion[[columns[columna_index]]] <- c(
+        clasificacion[[columns[columna_index]]],
+        fila[columna_index]
+      )
+    }
+  }
+ 
+  columna1 <- clasificacion[[columns[1]]]  # Columna para clasificar los puntos por color
+  columna2 <- clasificacion[[columns[2]]]
+  columna3 <- clasificacion[[x]]           # Eje X (se pasa como argumento)
+  columna4 <- clasificacion[[y]]           # Eje Y (se pasa como argumento)
+ 
+  # Lista de colores pastel disponibles
+  colores_disponibles <- c("#FFB3BA", "#B3ECFF", "#B3FFB3", "#FFD9B3",
+                            "#FFFFB3", "#C5B3FF", "#FFB3F0", "#B3FFF0")
+ 
+  # Recorre columna2 y guarda cada categoría nueva que encuentre
+  categorias_unicas <- c()
+  for (categoria in columna2) {
+    if (!(categoria %in% categorias_unicas)) {  # %in% revisa si el valor ya está en la lista
+      categorias_unicas <- c(categorias_unicas, categoria)
+    }
+  }
+ 
+  # Le asigna un color pastel a cada categoría
+  # %% en R es igual que % en Python (vuelve al primero si se acaban los colores)
+  mapa_colores <- c()
+  for (i in seq_along(categorias_unicas)) {
+    mapa_colores[categorias_unicas[i]] <- colores_disponibles[((i - 1) %% length(colores_disponibles)) + 1]
+  }
+ 
+  # Armamos un dataframe para que ggplot pueda graficar
+  df_plot <- data.frame(
+    x         = as.numeric(columna3),   # as.numeric convierte el texto a número
+    y         = as.numeric(columna4),
+    categoria = columna2
+  )
+ 
+  # Dibuja cada punto con el color que le corresponde según su categoría
+  p <- ggplot(df_plot, aes(x = x, y = y, color = categoria)) +
+    geom_point() +                               # geom_point() es el scatter plot
+    scale_color_manual(values = mapa_colores) +  # Aplica nuestros colores pastel
+    labs(color = columns[2], x = x, y = y) +
+    theme_minimal()
+ 
+  print(p)
+}
